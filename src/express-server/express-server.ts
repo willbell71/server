@@ -4,6 +4,7 @@ import * as express from 'express';
 import { ILogger } from '@willbell71/logger';
 import { IServerService } from '../iserver-service';
 import { IServerRouteHandler } from '../iserver-route-handler';
+import { TServerRoute } from '../tserver-route';
 
 /**
  * Server interface.
@@ -31,6 +32,18 @@ export class ExpressServer implements IServerService<express.RequestHandler, exp
   }
 
   /**
+   * Register middlewares.
+   * @param {(express.RequestHandler | null)[]} middlewares - sparse list of middleware to register.
+   * @return {void}
+   */
+  public registerMiddlewares(middlewares: (express.RequestHandler | null)[]): void {
+    middlewares
+      .forEach((middleware: express.RequestHandler | null): void => {
+        if (middleware) this.registerMiddleware(middleware);
+      });
+  }
+
+  /**
    * Register route
    * @param {string} path - path to register handler for.
    * @param {IServerRouteHandler<express.Router>} handler - handler for path.
@@ -38,6 +51,18 @@ export class ExpressServer implements IServerService<express.RequestHandler, exp
    */
   public registerRoute(path: string, handler: IServerRouteHandler<express.Router>): void {
     this.app.use(path, handler.registerHandlers());
+  }
+
+  /**
+   * Register a list of routes.
+   * @param {(TServerRoute<express.Router> | null)[]} routes - sparse list of routes to register.
+   * @return {void}
+   */
+  public registerRoutes(routes: (TServerRoute<express.Router> | null)[]): void {
+    routes
+      .forEach((route: TServerRoute<express.Router> | null) => {
+        if (route) this.registerRoute(route.path, route.handler);
+      });
   }
 
   /**
