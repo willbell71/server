@@ -1,6 +1,7 @@
 import { ILogger } from '@willbell71/logger';
 
 import { IServerRouteHandler } from './iserver-route-handler';
+import { TServerRoute } from './tserver-route';
 
 /**
  * Server interface.
@@ -15,11 +16,24 @@ export interface IServerService<M, R> {
   registerMiddleware: (middleware: M) => void;
 
   /**
+   * Register middlewares.
+   * @param {(M | null)[]} middlewares - sparse list of middleware to register.
+   * @return {void}
+   */
+  registerMiddlewares: (middlewares: (M | null)[]) => void;
+
+  /**
    * Register route
    * @param {string} path - path to register handler for.
    * @param {IServerRouteHandler<R>} handler - handler for path.
    */
   registerRoute: (path: string, handler: IServerRouteHandler<R>) => void;
+
+  /**
+   * Register routes.
+   * @param {(TServerRoute<express.Router> | null)[]} routes - sparse list of routes to register.
+   */
+  registerRoutes: (routes: (TServerRoute<R> | null)[]) => void;
 
   /**
    * Register view engine.
