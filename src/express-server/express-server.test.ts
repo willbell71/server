@@ -72,8 +72,21 @@ afterEach(() => {
 describe('ExpressServer', () => {
   describe('registerMiddleware', () => {
     it('should call app use', () => {
-      /* eslint-disable-next-line @typescript-eslint/no-empty-function */
-      server.registerMiddleware(() => {});
+      server.registerMiddleware((): void => {});
+
+      expect(express().use).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('registerMiddlewares', () => {
+    it('should call app use for each middleware', () => {
+      server.registerMiddlewares([(): void => {}, (): void => {}]);
+
+      expect(express().use).toHaveBeenCalledTimes(2);
+    });
+
+    it('should NOT call app use for NULL middleware', () => {
+      server.registerMiddlewares([(): void => {}, null]);
 
       expect(express().use).toHaveBeenCalledTimes(1);
     });
@@ -84,6 +97,26 @@ describe('ExpressServer', () => {
       server.registerRoute('', {
         registerHandlers: () => express.Router()
       });
+
+      expect(express().use).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('registerRoutes', () => {
+    it('should call app use for each route', () => {
+      server.registerRoutes([
+        { path: '', handler: { registerHandlers: (): express.Router => express.Router() } },
+        { path: '', handler: { registerHandlers: (): express.Router => express.Router() } }
+      ]);
+
+      expect(express().use).toHaveBeenCalledTimes(2);
+    });
+
+    it('should NOT call app use for NULL route', () => {
+      server.registerRoutes([
+        { path: '', handler: { registerHandlers: (): express.Router => express.Router() } },
+        null
+      ]);
 
       expect(express().use).toHaveBeenCalledTimes(1);
     });
