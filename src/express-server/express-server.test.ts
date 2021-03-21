@@ -11,8 +11,9 @@ jest.mock('http', () => {
 });
 import * as http from 'http';
 
+let useValue: unknown;
 jest.mock('express', () => {
-  const use: jest.Mock = jest.fn();
+  const use: jest.Mock = jest.fn().mockImplementation((value: unknown) => useValue = value);
   const set: jest.Mock = jest.fn();
   const Router: jest.Mock = jest.fn();
   const fakeStatic: jest.Mock = jest.fn().mockImplementation(() => 'fakeStatic');
@@ -145,6 +146,106 @@ describe('ExpressServer', () => {
 
       expect(express().use).toHaveBeenCalledTimes(1);
       expect(express().use).toHaveBeenCalledWith('fakeStatic');
+    });
+  });
+
+  describe('registerErrorHandler', () => {
+    it('should call app use', () => {
+      server.registerErrorHandler(logger);
+
+      expect(express().use).toHaveBeenCalledTimes(1);
+      expect(express().use).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it('should call log for error', () => {
+      server.registerErrorHandler(logger);
+
+      const res: express.Response = {
+        headersSent: false,
+        status: jest.fn().mockReturnValue({
+          send: jest.fn()
+        })
+      } as unknown as express.Response;
+
+      (useValue as Function)(new Error('error message'), {}, res, jest.fn());
+
+      expect(errorLineSpy).toHaveBeenCalledTimes(1);
+      expect(errorLineSpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'ERROR: Express error handler - error message');
+    });
+
+    it('should call next if headers sent', () => {
+      server.registerErrorHandler(logger);
+
+      const errorInst: Error = new Error('error message');
+
+      const res: express.Response = {
+        headersSent: true,
+        status: jest.fn().mockReturnValue({
+          send: jest.fn()
+        })
+      } as unknown as express.Response;
+
+      const next: jest.Mock = jest.fn();
+
+      (useValue as Function)(errorInst, {}, res, next);
+
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(errorInst);
+    });
+
+    it('should NOT call next if headers NOT sent', () => {
+      server.registerErrorHandler(logger);
+
+      const errorInst: Error = new Error('error message');
+
+      const res: express.Response = {
+        headersSent: false,
+        status: jest.fn().mockReturnValue({
+          send: jest.fn()
+        })
+      } as unknown as express.Response;
+
+      const next: jest.Mock = jest.fn();
+
+      (useValue as Function)(errorInst, {}, res, next);
+
+      expect(next).toHaveBeenCalledTimes(0);
+    });
+
+    it('should set status to 400', () => {
+      server.registerErrorHandler(logger);
+
+      const res: express.Response = {
+        headersSent: false,
+        status: jest.fn().mockReturnValue({
+          send: jest.fn()
+        })
+      } as unknown as express.Response;
+
+      (useValue as Function)(new Error('error message'), {}, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should send the error message', () => {
+      server.registerErrorHandler(logger);
+
+      const send: jest.Mock = jest.fn();
+
+      const res: express.Response = {
+        headersSent: false,
+        status: jest.fn().mockReturnValue({
+          send
+        })
+      } as unknown as express.Response;
+
+      const errorMessage: string = 'error message';
+
+      (useValue as Function)(new Error(errorMessage), {}, res, jest.fn());
+
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(send).toHaveBeenCalledWith(errorMessage);
     });
   });
 

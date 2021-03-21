@@ -49,6 +49,12 @@ export interface IServerService<M, R> {
   registerStaticPath: (path: string) => void;
 
   /**
+   * Install error handler and logger.
+   * @param {ILogger} logger - logger service provider.
+   */
+  registerErrorHandler: (logger: ILogger) => void;
+
+  /**
    * Start server.
    * @param {ILogger} logger - logger service provider.
    * @param {number} port - port number for server to listen on.
