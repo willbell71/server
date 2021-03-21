@@ -85,6 +85,20 @@ export class ExpressServer implements IServerService<express.RequestHandler, exp
   }
 
   /**
+   * Install express error handler and logger, this must be called after all routes are registered.
+   * @param {ILogger} logger - logger service provider.
+   */
+  public registerErrorHandler(logger: ILogger): void {
+    this.app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      logger.error(`Express error handler - ${err.message}`);
+
+      if (res.headersSent) return next(err);
+
+      res.status(400).send(err.message);
+    });
+  }
+
+  /**
    * Start server.
    * @param {ILogger} logger - logger service provider.
    * @param {number} port - port number for server to listen on.
