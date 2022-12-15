@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@willbell71/logger": "^1.0.3",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "pug": "^3.0.1"
   }
 }
